@@ -1,4 +1,5 @@
 <?php
+session_start();
 // Read form values (if submitted)
 $from = $_GET['from'] ?? '';
 $to   = $_GET['to'] ?? '';

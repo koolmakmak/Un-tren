@@ -1,12 +1,8 @@
 <?php
 // Start session
 session_start();
+require_once('connect.php');
 
-// Define your database credentials
-$servername = "localhost";
-$db_username = "users";
-$db_password = "";      // Your database password
-$dbname = "my_database"; // Your database name
 
 // Initialize variables
 $error_message = "";
@@ -17,30 +13,25 @@ if (isset($_POST['submit'])) {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // Create connection to MySQL database
-    $conn = new mysqli($servername, $db_username, $db_password, $dbname);
-
-    // Check connection
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-
     // Prepare and bind to prevent SQL injection
-    $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE username = ?");
+    $stmt = $conn->prepare("SELECT username, password FROM user_info WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $stmt->store_result();
+    $rows = $stmt->num_rows;
     
     if ($stmt->num_rows > 0) {
-        $stmt->bind_result($id, $stored_username, $stored_password);
+        $stmt->bind_result($stored_username, $stored_password);
         $stmt->fetch();
         
+        echo "<script>console.log('" . $stored_username . "', '" . $stored_password . "');</script>";
+
         // Verify the password
         if (password_verify($password, $stored_password)) {
             // Password is correct, set session
             $_SESSION['loggedin'] = true;
             $_SESSION['username'] = $stored_username;
-            header("Location: welcome.php"); // Redirect to welcome page
+            header("Location: index.html"); // Redirect to welcome page
             exit;
         } else {
             $error_message = "Invalid username or password.";

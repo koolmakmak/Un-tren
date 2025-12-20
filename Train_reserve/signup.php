@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
         // Prepare SQL query to insert data
-        $stmt = $mysqli->prepare("INSERT INTO user_info (firstname, lastname, username, password, cpassword, email) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO user_info (firstname, lastname, username, password, cpassword, email) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("ssssss", $firstname, $lastname, $username, $hashed_password, $cpassword, $email);
 
         if ($stmt->execute()) {
