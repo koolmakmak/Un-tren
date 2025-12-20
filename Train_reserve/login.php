@@ -4,7 +4,7 @@ session_start();
 
 // Define your database credentials
 $servername = "localhost";
-$db_username = "root";  // Your database username
+$db_username = "users";
 $db_password = "";      // Your database password
 $dbname = "my_database"; // Your database name
 
@@ -233,7 +233,7 @@ if (isset($_POST['submit'])) {
             </div>
             <button type="submit" name="submit">Login</button>
         </form>
-        <p>Don't have an account? <a href="register.php">Sign Up</a></p>
+        <p>Don't have an account? <a href="signup.php">Sign Up</a></p>
     </div>
 </main>
 
