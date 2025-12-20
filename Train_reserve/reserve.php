@@ -1,16 +1,26 @@
 <?php
 session_start();
+require 'connect.php'; // Include the database connection
+
 // Read form values (if submitted)
 $from = $_GET['from'] ?? '';
 $to   = $_GET['to'] ?? '';
 $date = $_GET['date'] ?? '';
 
-if (isset($_GET['search'])) {
-    if (!isset($_SESSION['user_id'])) {
-        // Not logged in → redirect to login page
-        header("Location: login.php");
-        exit();
-    }
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    // Not logged in → redirect to login page
+    header("Location: login.php");
+    exit();
+}
+
+// Fetch the list of stations from the database
+$query = "SELECT id, name FROM stations";
+$result = $conn->query($query);
+
+// Check for errors in the query
+if (!$result) {
+    die('Error: ' . $conn->error);
 }
 ?>
 
@@ -20,7 +30,6 @@ if (isset($_GET['search'])) {
     <meta charset="UTF-8">
     <title>Train Reservation System</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <style>
         * { box-sizing: border-box; }
 
@@ -43,14 +52,14 @@ if (isset($_GET['search'])) {
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
-        header .logo img{
-            height: 55px;
-            margin-right: 12px;
-        }
-
-        header .logo {
+        .logo {
             display: flex;
             align-items: center;
+        }
+
+        .logo img {
+            height: 55px;
+            margin-right: 12px;
         }
 
         header h1 {
@@ -58,15 +67,16 @@ if (isset($_GET['search'])) {
             margin: 0;
         }
 
-        nav{
-            display: flex;
-            gap: 24.5px;
-        }
-
-        nav a{
+        nav a {
             color: white;
+            margin-left: 20px;
             text-decoration: none;
             font-weight: 600;
+            transition: opacity 0.3s;
+        }
+
+        nav a:hover {
+            opacity: 0.8;
         }
 
         main {
@@ -98,12 +108,12 @@ if (isset($_GET['search'])) {
             margin-bottom: 5px;
         }
 
-        input {
+        select, input {
             width: 100%;
             padding: 12px;
             font-size: 16px;
             border-radius: 6px;
-            border: 1px solid #ccc;
+            border: 1px solid #ffffffff;
         }
 
         button {
@@ -124,7 +134,7 @@ if (isset($_GET['search'])) {
         .result {
             margin-top: 30px;
             padding: 20px;
-            background: #f8f9fa;
+            background: #ffffffff;
             border-radius: 8px;
         }
 
@@ -145,10 +155,10 @@ if (isset($_GET['search'])) {
         <h1>Train Reservation System</h1>
     </div>
     <nav>
-        <a href="index.html">Home</a>
-        <a href="#">Schedule</a>
-        <a href="#">My Booking</a>
-        <a href="#">Login</a>
+        <a href="index.php">Home</a>
+        <a href="schedule.php">Schedule</a>
+        <a href="My_booking.php">My Booking</a>
+        <a href="login.php">Login</a>
     </nav>
 </header>
 
@@ -161,12 +171,31 @@ if (isset($_GET['search'])) {
             <div class="search-box">
                 <div>
                     <label>From</label>
-                    <input type="text" name="from" value="<?= htmlspecialchars($from) ?>" required>
+                    <select name="from" required>
+                        <option value="">Select Station</option>
+                        <?php
+                        // Display all stations in the dropdown
+                        while ($row = $result->fetch_assoc()) {
+                            $selected = ($from == $row['id']) ? 'selected' : '';
+                            echo '<option value="' . $row['id'] . '" ' . $selected . '>' . htmlspecialchars($row['name']) . '</option>';
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div>
                     <label>To</label>
-                    <input type="text" name="to" value="<?= htmlspecialchars($to) ?>" required>
+                    <select name="to" required>
+                        <option value="">Select Station</option>
+                        <?php
+                        // Reset result pointer to loop over stations again for 'To' selection
+                        $result->data_seek(0);
+                        while ($row = $result->fetch_assoc()) {
+                            $selected = ($to == $row['id']) ? 'selected' : '';
+                            echo '<option value="' . $row['id'] . '" ' . $selected . '>' . htmlspecialchars($row['name']) . '</option>';
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div>
@@ -192,6 +221,7 @@ if (isset($_GET['search'])) {
 
     </div>
 </main>
+
 <footer>
     © 2025 Train Reservation System | All Rights Reserved
 </footer>
