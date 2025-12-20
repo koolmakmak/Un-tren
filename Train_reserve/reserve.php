@@ -3,6 +3,14 @@
 $from = $_GET['from'] ?? '';
 $to   = $_GET['to'] ?? '';
 $date = $_GET['date'] ?? '';
+
+if (isset($_GET['search'])) {
+    if (!isset($_SESSION['user_id'])) {
+        // Not logged in → redirect to login page
+        header("Location: login.php");
+        exit();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -166,12 +174,12 @@ $date = $_GET['date'] ?? '';
                 </div>
 
                 <div style="align-self: end;">
-                    <button type="submit">Search</button>
+                    <button type="submit" name="search">Search</button>
                 </div>
             </div>
         </form>
 
-        <?php if ($from && $to && $date): ?>
+        <?php if ($from && $to && $date && isset($_SESSION['user_id'])): ?>
             <div class="result">
                 <h3>Search Result</h3>
                 <p><strong>From:</strong> <?= htmlspecialchars($from) ?></p>
