@@ -50,7 +50,7 @@ if (isset($_POST['confirmBooking'])) {
     }
 
     // Redirect to success page
-    header("Location: ??.php?code=$booking_code");
+    header("Location: my_booking.php?code=$booking_code");
     exit;
 }
 ?>
