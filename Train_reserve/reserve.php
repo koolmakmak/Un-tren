@@ -29,7 +29,7 @@ if (!$result) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Train Reservation System</title>
+    <title>UTR Train Reservation System</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * { box-sizing: border-box; }
@@ -153,7 +153,7 @@ if (!$result) {
 <header>
     <div class="logo">
         <img src="assets/train.png" alt="Train Logo">
-        <h1>Train Reservation System</h1>
+        <h1>UTR Train Reservation System</h1>
     </div>
     <nav>
         <a href="index.php">Home</a>
@@ -330,7 +330,7 @@ ORDER BY sr.service_date, sr.id;");
 </main>
 
 <footer>
-    © 2025 Train Reservation System | All Rights Reserved
+    © 2025 UTR Train Reservation System | All Rights Reserved
 </footer>
 
 </body>
