@@ -19,9 +19,9 @@ $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 // ===== HANDLE CONFIRM =====
 if (isset($_POST['confirmBooking'])) {
 
-    $user_id = 1;              // TEMP (use session later)
-    $train_id = 1;             // TEMP
-    $status_id = 1;            // e.g. CONFIRMED
+    $user_id = 1;      // TEMP (use session later)
+    $train_id = 1;     // TEMP
+    $status_id = 1;    // CONFIRMED
     $booking_code = strtoupper(substr(md5(uniqid()), 0, 12));
     $seats = explode(",", $_POST['seats']);
 
@@ -34,7 +34,7 @@ if (isset($_POST['confirmBooking'])) {
 
     $book_id = $pdo->lastInsertId();
 
-    // Insert seats
+    // Insert booking seats
     $stmtSeat = $pdo->prepare("
         INSERT INTO booking_seats (book_id, seat_number)
         VALUES (?, ?)
@@ -44,7 +44,9 @@ if (isset($_POST['confirmBooking'])) {
         $stmtSeat->execute([$book_id, $seat]);
     }
 
-    echo "<script>alert('Booking successful! Code: $booking_code');</script>";
+    // Redirect to success page
+    header("Location: ??.php?code=$booking_code");
+    exit;
 }
 ?>
 <!DOCTYPE html>
