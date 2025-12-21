@@ -1,20 +1,25 @@
 <?php
 $carriage = $_GET['carriage'] ?? 1;
 
-$bookedSeats = [
-    1 => ["1A", "2B", "3C"],
-    2 => ["4A", "5D"],
-    3 => ["6B", "7C"],
-    4 => ["8A", "9D"],
-    5 => ["10B", "11C"]
-];
-
 $pdo = new PDO(
     "mysql:host=localhost;dbname=train_reservation_system;charset=utf8",
     "root",
     ""
 );
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+// ===== GET BOOKED SEATS FROM DATABASE =====
+$stmt = $pdo->prepare("
+    SELECT bs.seat_number
+    FROM booking b
+    INNER JOIN booking_seats bs ON b.book_id = bs.book_id
+    WHERE bs.carriage = ?
+      AND b.status_id = 1
+");
+
+$stmt->execute([$carriage]);
+
+$bookedSeats = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // ===== HANDLE CONFIRM =====
 if (isset($_POST['confirmBooking'])) {
@@ -36,12 +41,12 @@ if (isset($_POST['confirmBooking'])) {
 
     // Insert booking seats
     $stmtSeat = $pdo->prepare("
-        INSERT INTO booking_seats (book_id, seat_number)
-        VALUES (?, ?)
+        INSERT INTO booking_seats (book_id, seat_number, carriage)
+        VALUES (?, ?, ?)
     ");
 
     foreach ($seats as $seat) {
-        $stmtSeat->execute([$book_id, $seat]);
+        $stmtSeat->execute([$book_id, $seat, $carriage]);
     }
 
     // Redirect to success page
