@@ -14,7 +14,7 @@ if (isset($_POST['submit'])) {
     $password = $_POST['password'];
 
     // Prepare and bind to prevent SQL injection
-    $stmt = $conn->prepare("SELECT username, password FROM user_info WHERE username = ?");
+    $stmt = $conn->prepare("SELECT username, password FROM users_info WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $stmt->store_result();
@@ -31,7 +31,7 @@ if (isset($_POST['submit'])) {
             // Password is correct, set session
             $_SESSION['loggedin'] = true;
             $_SESSION['username'] = $stored_username;
-            header("Location: index.html"); // Redirect to welcome page
+            header("Location: index.php"); // Redirect to welcome page
             exit;
         } else {
             $error_message = "Invalid username or password.";

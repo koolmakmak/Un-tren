@@ -190,7 +190,7 @@ if (!$result) {
                 <?php
                 // Loop through the fetched stations and display them as list items
                 while ($row = $result->fetch_assoc()) {
-                    echo '<li><a href="reserve.php?station=' . urlencode($row['name']) . '">' . htmlspecialchars($row['name']) . '</a></li>';
+                    echo '<li><a onclick = "(target) => {console.log(target.id)}" href="reserve.php?station=' . urlencode($row['name']) . '">' . htmlspecialchars($row['name']) . '</a></li>';
                 }
                 ?>
             </ul>

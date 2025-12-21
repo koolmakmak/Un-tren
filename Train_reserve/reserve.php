@@ -1,6 +1,6 @@
 <?php
 session_start();
-require 'connect.php'; // Include the database connection
+require_once 'connect.php'; // Include the database connection
 
 // Read form values (if submitted)
 $from = $_GET['from'] ?? '';
@@ -8,8 +8,9 @@ $to   = $_GET['to'] ?? '';
 $date = $_GET['date'] ?? '';
 
 // Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
+if (isset($_SESSION['user_id'])) {
     // Not logged in → redirect to login page
+    //echo "<script>alert('Please log in to make a reservation.');</script>";
     header("Location: login.php");
     exit();
 }
@@ -209,15 +210,121 @@ if (!$result) {
             </div>
         </form>
 
-        <?php if ($from && $to && $date && isset($_SESSION['user_id'])): ?>
+        <?php if ($from && $to && $date && (!isset($_SESSION['user_id']))): 
+        $stmt = $conn->prepare("SELECT
+    sr.service_date,
+ 
+    CONCAT(
+        s.headcode_digit,
+        LEFT(ds.station_code, 1),
+        LPAD(sr.sequence_no, 2, '0')
+    ) AS headcode,
+ 
+    s.name AS service_type,
+    ts.name AS train_service_name,
+ 
+    -- Route termini stations
+    rs_first.station_id AS start_station_id,
+    ss_first.name AS start_station_name,
+ 
+    rs_last.station_id AS dest_station_id,
+    ss_last.name AS dest_station_name
+ 
+FROM service_runs sr
+JOIN train_services ts 
+    ON sr.train_service_id = ts.id
+JOIN services s 
+    ON ts.service_type_id = s.id
+ 
+-- Selected stations (for filtering the service runs)
+JOIN route_stations rs_start 
+    ON rs_start.route_id = ts.route_id
+JOIN stations ss 
+    ON rs_start.station_id = ss.id
+JOIN route_stations rs_end 
+    ON rs_end.route_id = ts.route_id
+JOIN stations ds 
+    ON rs_end.station_id = ds.id
+ 
+-- Termini stations of the route
+JOIN route_stations rs_first 
+    ON rs_first.route_id = ts.route_id AND rs_first.stop_order = (
+        SELECT MIN(stop_order) FROM route_stations WHERE route_id = ts.route_id
+    )
+JOIN stations ss_first 
+    ON rs_first.station_id = ss_first.id
+JOIN route_stations rs_last 
+    ON rs_last.route_id = ts.route_id AND rs_last.stop_order = (
+        SELECT MAX(stop_order) FROM route_stations WHERE route_id = ts.route_id
+    )
+JOIN stations ss_last 
+    ON rs_last.station_id = ss_last.id
+ 
+WHERE ss.id = ?             -- selected start station
+  AND ds.id = ?             -- selected destination station
+  AND sr.service_date =  ?
+  AND rs_start.stop_order < rs_end.stop_order
+ 
+ORDER BY sr.service_date, sr.id;");
+        $stmt->bind_param("iis", $from, $to, $date);
+        $stmt->execute();
+        $search_result = $stmt->get_result();
+        ?>
             <div class="result">
-                <h3>Search Result</h3>
-                <p><strong>From:</strong> <?= htmlspecialchars($from) ?></p>
-                <p><strong>To:</strong> <?= htmlspecialchars($to) ?></p>
-                <p><strong>Date:</strong> <?= htmlspecialchars($date) ?></p>
-                <p>No trains found (database not connected yet).</p>
+        <h3>Available Trains for <?= htmlspecialchars($date) ?></h3>
+        
+        <?php if ($search_result->num_rows > 0): ?>
+    <table class="schedule-table">
+        <thead>
+            <tr>
+                <th>Headcode</th>
+                <th>Service Type</th>
+                <th>Train Name</th>
+                <th>From</th>
+                <th>To</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($row = $search_result->fetch_assoc()): ?>
+                <tr>
+                    <td><strong><?= htmlspecialchars($row['headcode']) ?></strong></td>
+                    
+                    <td><?= htmlspecialchars($row['service_type']) ?></td>
+                    
+                    <td><?= htmlspecialchars($row['train_service_name']) ?></td>
+                    
+                    <td>
+                        <small>ID: <?= htmlspecialchars($row['start_station_id']) ?></small><br>
+                        <?= htmlspecialchars($row['start_station_name']) ?>
+                    </td>
+                    
+                    <td>
+                        <small>ID: <?= htmlspecialchars($row['dest_station_id']) ?></small><br>
+                        <?= htmlspecialchars($row['dest_station_name']) ?>
+                    </td>
+                    <td>
+                        <a href="reserve_seats.php" 
+                           style="background-color: #720A00; 
+                                  color: white; 
+                                  padding: 8px 16px; 
+                                  text-decoration: none; 
+                                  border-radius: 4px; 
+                                  font-weight: bold;
+                                  display: inline-block;">
+                           Select
+                        </a>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+        </tbody>
+    </table>
+<?php else: ?>
+            <div class="no-results">
+                <p>🚫 No trains found for the selected route and date.</p>
             </div>
         <?php endif; ?>
+    </div>
+<?php endif; ?>
 
     </div>
 </main>
