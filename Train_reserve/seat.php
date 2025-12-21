@@ -1,41 +1,146 @@
+<?php
+$carriage = $_GET['carriage'] ?? 1;
+
+$bookedSeats = [
+    1 => ["1A", "2B", "3C"],
+    2 => ["4A", "5D"],
+    3 => ["6B", "7C"],
+    4 => ["8A", "9D"],
+    5 => ["10B", "11C"]
+];
+?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Seat Selection</title>
+    <meta charset="UTF-8">
+    <title>Train Reservation System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <style>
+        * { box-sizing: border-box; }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            text-align: center;
+            font-family: "Segoe UI", Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #f4f6f8, #e9ecef);
+            display: flex;
+            flex-direction: column;
         }
 
-        h2 {
-            margin-top: 10px;
+        header {
+            background-color: #720A00;
+            color: white;
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 55px;
+            margin-right: 12px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        nav a {
+            color: white;
+            margin-left: 20px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .back-btn {
-            margin-top: 20px;
-            padding: 8px 16px;
-            font-size: 14px;
-            background: #555;
+            align-self: flex-start;      /* move to the left */
+            margin-bottom: 0px;
+            padding: 12px 24px;          /* bigger button */
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #720A00;
             color: white;
             border: none;
             border-radius: 6px;
             cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
         }
 
         .back-btn:hover {
-            background: #333;
+            background-color: #8c0d00;
+            transform: translateY(-2px);
+        }
+
+        .btn-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .next-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #720A00;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .next-btn:hover {
+            background-color: #8c0d00;
+            transform: translateY(-2px);
+        }
+
+        .next-btn:hover {
+            background-color: #8c0d00;
+            transform: translateY(-2px);
+        }
+
+        .container h2 {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .container p {
+            margin-top: 5px;
+            margin-bottom: 5px;
         }
 
         .coach {
             display: flex;
-            flex-direction: row-reverse; /* Row 1 on the right (front) */
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px auto;
-            width: fit-content;
+            flex-direction: row-reverse;
+            margin-top: 20px;
         }
 
         .row {
@@ -50,128 +155,190 @@
             margin: 5px 0;
             line-height: 45px;
             border-radius: 6px;
-            cursor: pointer;
             color: white;
             font-size: 13px;
+            cursor: pointer;
         }
 
-        .available {
-            background-color: #4CAF50;
+        .available { background: #4CAF50; }
+        .booked { background: #f44336; cursor: not-allowed; }
+        .selected { background: #2196F3; }
+
+        .aisle { height: 15px; }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            background-color: #720A00;
+            color: white;
         }
 
-        .booked {
-            background-color: #f44336;
-            cursor: not-allowed;
+        /* ===== Modal ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
         }
 
-        .selected {
-            background-color: #2196F3;
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
-        .aisle {
-            height: 15px;
+        .modal-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
         }
 
-        .info {
-            margin-top: 15px;
+        .modal-buttons button {
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
         }
 
-        .legend span {
-            margin: 0 10px;
+        .cancel-btn {
+            background: #9e9e9e;
+            color: white;
+        }
+
+        .confirm-btn {
+            background: #4CAF50;
+            color: white;
         }
     </style>
 </head>
+
+<div class="modal" id="confirmModal">
+    <div class="modal-content">
+        <h3>Confirm Seat Selection</h3>
+        <p>You have selected:</p>
+        <p><b id="modalSeats">None</b></p>
+
+        <div class="modal-buttons">
+            <button class="cancel-btn" onclick="closeConfirm()">Cancel</button>
+            <button class="confirm-btn" onclick="confirmSeats()">Confirm</button>
+        </div>
+    </div>
+</div>
+
 <body>
 
-<button class="back-btn" onclick="goBack()">⬅ Back to Carriage Selection</button>
+<header>
+    <div class="logo">
+        <img src="assets/train.png" alt="Train Logo">
+        <h1>Train Reservation System</h1>
+    </div>
+    <nav>
+        <a href="#">Home</a>
+        <a href="#">Schedule</a>
+        <a href="#">My Booking</a>
+        <a href="#">Login</a>
+    </nav>
+</header>
 
-<h2 id="title">💺 Seat Selection</h2>
-<p>Front of train ➡️</p>
+<main>
+    <div class="container">
+        <div class="btn-row">
+            <button class="back-btn" onclick="location.href='carriage.php'">Back</button>
+            <button class="next-btn" onclick="openConfirm()">Next</button>
+        </div>
 
-<div class="coach" id="coach"></div>
+        <h2>Seat Selection – Carriage <?php echo $carriage; ?></h2>
+        <p>Front of train ➡️</p>
 
-<div class="info">
-    <p><b>Selected Seats:</b> <span id="selectedSeats">None</span></p>
-</div>
+        <div class="coach">
+            <?php
+            for ($row = 1; $row <= 20; $row++) {
+                echo "<div class='row'>";
 
-<div class="legend">
-    <span style="color:#4CAF50;">■</span> Available
-    <span style="color:#f44336;">■</span> Booked
-    <span style="color:#2196F3;">■</span> Selected
-</div>
+                foreach (["C", "D"] as $l) {
+                    $s = $row . $l;
+                    echo in_array($s, $bookedSeats[$carriage] ?? [])
+                        ? "<div class='seat booked'>$s</div>"
+                        : "<div class='seat available' onclick=\"toggleSeat(this,'$s')\">$s</div>";
+                }
+
+                echo "<div class='aisle'></div>";
+
+                foreach (["A", "B"] as $l) {
+                    $s = $row . $l;
+                    echo in_array($s, $bookedSeats[$carriage] ?? [])
+                        ? "<div class='seat booked'>$s</div>"
+                        : "<div class='seat available' onclick=\"toggleSeat(this,'$s')\">$s</div>";
+                }
+
+                echo "</div>";
+            }
+            ?>
+        </div>
+
+        <p><b>Selected Seats:</b> <span id="selectedSeats">None</span></p>
+    </div>
+</main>
+
+<footer>
+    © 2025 Train Reservation System
+</footer>
 
 <script>
-    function goBack() {
-        window.location.href = "carriage.html";
-    }
+let selectedSeats = [];
 
-    const params = new URLSearchParams(window.location.search);
-    const carriage = params.get("carriage");
+function toggleSeat(el, seat) {
 
-    document.getElementById("title").innerText =
-        "Seat Selection – Carriage " + carriage;
-
-    const coach = document.getElementById("coach");
-    const selectedSeatsText = document.getElementById("selectedSeats");
-    let selectedSeats = [];
-
-    // Example booked seats per carriage
-    const bookedSeats = {
-        1: ["1A", "2B", "3C"],
-        2: ["4A", "5D"],
-        3: ["6B", "7C"],
-        4: ["8A", "9D"],
-        5: ["10B", "11C"]
-    };
-
-    for (let row = 1; row <= 20; row++) {
-        const rowDiv = document.createElement("div");
-        rowDiv.className = "row";
-
-        // Left side (C, D)
-        ["C", "D"].forEach(letter => {
-            rowDiv.appendChild(createSeat(row + letter));
-        });
-
-        // Aisle
-        const aisle = document.createElement("div");
-        aisle.className = "aisle";
-        rowDiv.appendChild(aisle);
-
-        // Right side (A, B)
-        ["A", "B"].forEach(letter => {
-            rowDiv.appendChild(createSeat(row + letter));
-        });
-
-        coach.appendChild(rowDiv);
-    }
-
-    function createSeat(seatNumber) {
-        const seat = document.createElement("div");
-        seat.innerText = seatNumber;
-
-        if (bookedSeats[carriage]?.includes(seatNumber)) {
-            seat.className = "seat booked";
-            return seat;
+    // If seat is already selected → allow unselect
+    if (selectedSeats.includes(seat)) {
+        el.classList.remove("selected");
+        selectedSeats = selectedSeats.filter(s => s !== seat);
+    } 
+    // If seat is NOT selected → check limit
+    else {
+        if (selectedSeats.length >= 10) {
+            alert("You can select a maximum of 10 seats.");
+            return;
         }
-
-        seat.className = "seat available";
-        seat.onclick = () => {
-            seat.classList.toggle("selected");
-
-            if (selectedSeats.includes(seatNumber)) {
-                selectedSeats = selectedSeats.filter(s => s !== seatNumber);
-            } else {
-                selectedSeats.push(seatNumber);
-            }
-
-            selectedSeatsText.innerText =
-                selectedSeats.length ? selectedSeats.join(", ") : "None";
-        };
-
-        return seat;
+        el.classList.add("selected");
+        selectedSeats.push(seat);
     }
+
+    document.getElementById("selectedSeats").innerText =
+        selectedSeats.length ? selectedSeats.join(", ") : "None";
+}
+
+function openConfirm() {
+    if (selectedSeats.length === 0) {
+        alert("Please select at least one seat.");
+        return;
+    }
+
+    document.getElementById("modalSeats").innerText = selectedSeats.join(", ");
+    document.getElementById("confirmModal").style.display = "flex";
+}
+
+function closeConfirm() {
+    document.getElementById("confirmModal").style.display = "none";
+}
+
+function confirmSeats() {
+    alert("Seats confirmed: " + selectedSeats.join(", "));
+    // location.href = "payment.php";
+}
 </script>
+
 
 </body>
 </html>
