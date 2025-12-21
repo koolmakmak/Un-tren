@@ -303,7 +303,7 @@ ORDER BY sr.service_date, sr.id;");
                         <?= htmlspecialchars($row['dest_station_name']) ?>
                     </td>
                     <td>
-                        <a href="reserve_seats.php" 
+                        <a href="carriage.php" 
                            style="background-color: #720A00; 
                                   color: white; 
                                   padding: 8px 16px; 
