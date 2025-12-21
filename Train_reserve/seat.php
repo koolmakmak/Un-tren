@@ -8,6 +8,44 @@ $bookedSeats = [
     4 => ["8A", "9D"],
     5 => ["10B", "11C"]
 ];
+
+$pdo = new PDO(
+    "mysql:host=localhost;dbname=train_reservation_system;charset=utf8",
+    "root",
+    ""
+);
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+// ===== HANDLE CONFIRM =====
+if (isset($_POST['confirmBooking'])) {
+
+    $user_id = 1;              // TEMP (use session later)
+    $train_id = 1;             // TEMP
+    $status_id = 1;            // e.g. CONFIRMED
+    $booking_code = strtoupper(substr(md5(uniqid()), 0, 12));
+    $seats = explode(",", $_POST['seats']);
+
+    // Insert booking
+    $stmt = $pdo->prepare("
+        INSERT INTO booking (user_id, train_id, status_id, booking_code)
+        VALUES (?, ?, ?, ?)
+    ");
+    $stmt->execute([$user_id, $train_id, $status_id, $booking_code]);
+
+    $book_id = $pdo->lastInsertId();
+
+    // Insert seats
+    $stmtSeat = $pdo->prepare("
+        INSERT INTO booking_seats (book_id, seat_number)
+        VALUES (?, ?)
+    ");
+
+    foreach ($seats as $seat) {
+        $stmtSeat->execute([$book_id, $seat]);
+    }
+
+    echo "<script>alert('Booking successful! Code: $booking_code');</script>";
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -80,9 +118,9 @@ $bookedSeats = [
         }
 
         .back-btn {
-            align-self: flex-start;      /* move to the left */
+            align-self: flex-start;
             margin-bottom: 0px;
-            padding: 12px 24px;          /* bigger button */
+            padding: 12px 24px;
             font-size: 16px;
             font-weight: bold;
             background-color: #720A00;
@@ -229,10 +267,15 @@ $bookedSeats = [
         <p>You have selected:</p>
         <p><b id="modalSeats">None</b></p>
 
-        <div class="modal-buttons">
-            <button class="cancel-btn" onclick="closeConfirm()">Cancel</button>
-            <button class="confirm-btn" onclick="confirmSeats()">Confirm</button>
-        </div>
+        <form method="POST">
+            <input type="hidden" name="carriage" value="<?php echo $carriage; ?>">
+            <input type="hidden" name="seats" id="seatInput">
+
+            <div class="modal-buttons">
+                <button type="button" class="cancel-btn" onclick="closeConfirm()">Cancel</button>
+                <button type="submit" class="confirm-btn" name="confirmBooking">Confirm</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -326,6 +369,7 @@ function openConfirm() {
     }
 
     document.getElementById("modalSeats").innerText = selectedSeats.join(", ");
+    document.getElementById("seatInput").value = selectedSeats.join(",");
     document.getElementById("confirmModal").style.display = "flex";
 }
 
