@@ -318,7 +318,7 @@ if (isset($_POST['confirmBooking'])) {
 
                 foreach (["A", "B"] as $l) {
                     $s = $row . $l;
-                    echo in_array($s, $bookedSeats[$carriage] ?? [])
+                    echo in_array($s, $bookedSeats)
                         ? "<div class='seat booked'>$s</div>"
                         : "<div class='seat available' onclick=\"toggleSeat(this,'$s')\">$s</div>";
                 }
@@ -327,7 +327,7 @@ if (isset($_POST['confirmBooking'])) {
 
                 foreach (["C", "D"] as $l) {
                     $s = $row . $l;
-                    echo in_array($s, $bookedSeats[$carriage] ?? [])
+                    echo in_array($s, $bookedSeats)
                         ? "<div class='seat booked'>$s</div>"
                         : "<div class='seat available' onclick=\"toggleSeat(this,'$s')\">$s</div>";
                 }
