@@ -311,7 +311,7 @@ if (isset($_POST['confirmBooking'])) {
             for ($row = 1; $row <= 20; $row++) {
                 echo "<div class='row'>";
 
-                foreach (["C", "D"] as $l) {
+                foreach (["A", "B"] as $l) {
                     $s = $row . $l;
                     echo in_array($s, $bookedSeats[$carriage] ?? [])
                         ? "<div class='seat booked'>$s</div>"
@@ -320,7 +320,7 @@ if (isset($_POST['confirmBooking'])) {
 
                 echo "<div class='aisle'></div>";
 
-                foreach (["A", "B"] as $l) {
+                foreach (["C", "D"] as $l) {
                     $s = $row . $l;
                     echo in_array($s, $bookedSeats[$carriage] ?? [])
                         ? "<div class='seat booked'>$s</div>"
