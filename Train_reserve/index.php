@@ -176,7 +176,7 @@ if (!$result) {
     <nav>
         <a href="#">Home</a>
         <a href="#">Schedule</a>
-        <a href="#">My Booking</a>
+        <a href="my_booking.php">My Booking</a>
         <a href="login.php">Login</a>
     </nav>
 </header>
