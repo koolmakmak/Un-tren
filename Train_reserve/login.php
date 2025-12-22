@@ -1,8 +1,10 @@
 <?php
 // Start session
 session_start();
-require_once('connect.php');
 
+// Handle logout
+
+require_once('connect.php');
 
 // Initialize variables
 $error_message = "";
@@ -14,25 +16,32 @@ if (isset($_POST['submit'])) {
     $password = $_POST['password'];
 
     // Prepare and bind to prevent SQL injection
-    $stmt = $conn->prepare("SELECT username, password FROM users_info WHERE username = ?");
+    $stmt = $conn->prepare("SELECT user_id, username, password FROM users_info WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $stmt->store_result();
-    $rows = $stmt->num_rows;
     
     if ($stmt->num_rows > 0) {
-        $stmt->bind_result($stored_username, $stored_password);
+        $stmt->bind_result($user_id, $stored_username, $stored_password);
         $stmt->fetch();
         
-        echo "<script>console.log('" . $stored_username . "', '" . $stored_password . "');</script>";
-
         // Verify the password
         if (password_verify($password, $stored_password)) {
             // Password is correct, set session
             $_SESSION['loggedin'] = true;
             $_SESSION['username'] = $stored_username;
-            header("Location: index.php"); // Redirect to welcome page
-            exit;
+            $_SESSION['user_id'] = $user_id;
+            
+            // Check if user is admin
+            if ($stored_username === 'koolmakmak') {
+                $_SESSION['is_admin'] = true;
+                header("Location: admin_page.php");
+                exit;
+            } else {
+                $_SESSION['is_admin'] = false;
+                header("Location: index.php");
+                exit;
+            }
         } else {
             $error_message = "Invalid username or password.";
         }
@@ -178,6 +187,21 @@ if (isset($_POST['submit'])) {
             margin-bottom: 20px;
         }
 
+        .signup-link {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .signup-link a {
+            color: #720A00;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
         /* ===== FOOTER ===== */
         footer {
             text-align: center;
@@ -196,7 +220,7 @@ if (isset($_POST['submit'])) {
         <h1>UTR Train Reservation System</h1>
     </div>
     <nav>
-        <a href="index.html">Home</a>
+        <a href="index.php">Home</a>
         <a href="schedule.php">Schedule</a>
         <a href="my_booking.php">My Booking</a>
         <a href="login.php" class="active">Login</a>
@@ -224,7 +248,9 @@ if (isset($_POST['submit'])) {
             </div>
             <button type="submit" name="submit">Login</button>
         </form>
-        <p>Don't have an account? <a href="signup.php">Sign Up</a></p>
+        <div class="signup-link">
+            <p>Don't have an account? <a href="signup.php">Sign Up</a></p>
+        </div>
     </div>
 </main>
 

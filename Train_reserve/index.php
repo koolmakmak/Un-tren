@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 require 'connect.php'; // Include the database connection file
 
 // Fetch stations from the database

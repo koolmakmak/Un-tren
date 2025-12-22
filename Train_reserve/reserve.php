@@ -7,10 +7,9 @@ $from = $_GET['from'] ?? '';
 $to   = $_GET['to'] ?? '';
 $date = $_GET['date'] ?? '';
 
-// Check if user is logged in
-if (isset($_SESSION['user_id'])) {
+// Check if user is NOT logged in (fixed logic)
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     // Not logged in → redirect to login page
-    //echo "<script>alert('Please log in to make a reservation.');</script>";
     header("Location: login.php");
     exit();
 }
@@ -114,7 +113,7 @@ if (!$result) {
             padding: 12px;
             font-size: 16px;
             border-radius: 6px;
-            border: 1px solid #ffffffff;
+            border: 1px solid #ccc;
         }
 
         button {
@@ -135,8 +134,36 @@ if (!$result) {
         .result {
             margin-top: 30px;
             padding: 20px;
-            background: #ffffffff;
+            background: #f9f9f9;
             border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #720A00;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
         }
 
         footer {
@@ -158,8 +185,8 @@ if (!$result) {
     <nav>
         <a href="index.php">Home</a>
         <a href="schedule.php">Schedule</a>
-        <a href="My_booking.php">My Booking</a>
-        <a href="login.php">Login</a>
+        <a href="my_booking.php">My Booking</a>
+        <a href="login.php?logout=1">Logout</a>
     </nav>
 </header>
 
@@ -210,8 +237,9 @@ if (!$result) {
             </div>
         </form>
 
-        <?php if ($from && $to && $date && (!isset($_SESSION['user_id']))): 
+        <?php if ($from && $to && $date): 
         $stmt = $conn->prepare("SELECT
+    sr.id AS service_run_id,
     sr.service_date,
 
     CONCAT(
@@ -220,10 +248,10 @@ if (!$result) {
         LPAD(sr.sequence_no, 2, '0')
     ) AS headcode,
 
-    s.name AS service_type,
+    s.name  AS service_type,
     ts.name AS train_service_name,
 
-    -- TRUE service endpoints
+    -- TRUE service-run endpoints
     origin_term.id   AS service_start_station_id,
     origin_term.name AS service_start_station_name,
 
@@ -236,48 +264,39 @@ JOIN train_services ts
 JOIN services s
     ON ts.service_type_id = s.id
 
--- Start station (must be a stop)
+-- Passenger-selected boarding station
 JOIN route_stations rs_start
     ON rs_start.route_id = ts.route_id
    AND rs_start.station_id = ?
    AND rs_start.is_stop = 1
-JOIN stations st_start
-    ON st_start.id = rs_start.station_id
 
--- Destination station (must be a stop)
+-- Passenger-selected alighting station
 JOIN route_stations rs_end
     ON rs_end.route_id = ts.route_id
    AND rs_end.station_id = ?
    AND rs_end.is_stop = 1
-JOIN stations st_end
-    ON st_end.id = rs_end.station_id
 
-JOIN route_stations rs_first
-    ON rs_first.route_id = ts.route_id
-   AND rs_first.stop_order = (
-        SELECT MIN(stop_order)
-        FROM route_stations
-        WHERE route_id = ts.route_id
-   )
+-- Service start (from train_service)
+JOIN route_stations rs_service_start
+    ON rs_service_start.route_id = ts.route_id
+   AND rs_service_start.station_id = ts.start_station_id
 JOIN stations origin_term
-    ON origin_term.id = rs_first.station_id
+    ON origin_term.id = rs_service_start.station_id
 
--- True route destination (terminus)
-JOIN route_stations rs_last
-    ON rs_last.route_id = ts.route_id
-   AND rs_last.stop_order = (
-        SELECT MAX(stop_order)
-        FROM route_stations
-        WHERE route_id = ts.route_id
-   )
+-- Service terminus (from train_service)
+JOIN route_stations rs_service_end
+    ON rs_service_end.route_id = ts.route_id
+   AND rs_service_end.station_id = ts.dest_station_id
 JOIN stations dest_term
-    ON dest_term.id = rs_last.station_id
-
-
+    ON dest_term.id = rs_service_end.station_id
 
 WHERE
     sr.service_date = ?
     AND rs_start.stop_order < rs_end.stop_order
+
+    -- Ensure passenger journey lies within service span
+    AND rs_start.stop_order >= rs_service_start.stop_order
+    AND rs_end.stop_order   <= rs_service_end.stop_order
 
 ORDER BY sr.service_date, sr.id;");
 
@@ -289,7 +308,7 @@ ORDER BY sr.service_date, sr.id;");
         <h3>Available Trains for <?= htmlspecialchars($date) ?></h3>
         
         <?php if ($search_result->num_rows > 0): ?>
-    <table class="schedule-table">
+    <table>
         <thead>
             <tr>
                 <th>Headcode</th>
@@ -297,6 +316,7 @@ ORDER BY sr.service_date, sr.id;");
                 <th>Train Name</th>
                 <th>From</th>
                 <th>To</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -318,7 +338,7 @@ ORDER BY sr.service_date, sr.id;");
                         <?= htmlspecialchars($row['service_dest_station_name']) ?>
                     </td>
                     <td>
-                        <a href="carriage.php" 
+                        <a href="carriage.php?service_run_id=<?= $row['service_run_id'] ?>" 
                            style="background-color: #720A00; 
                                   color: white; 
                                   padding: 8px 16px; 
